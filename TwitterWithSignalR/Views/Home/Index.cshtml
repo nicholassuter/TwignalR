@@ -8,13 +8,21 @@
     <input type="hidden" id="displayname" />
     <br />
     <br />
-    <div style="width: 45%; float: left; border: solid 1px #dad7d7; margin-right: 20px; padding: 5px; " id="discussion" onclick="vider('#h3Messages', 'Fil de discussion', '#nbMessages')">
+    <div style="width: 22%; float: left; border: solid 1px #dad7d7; margin-right: 20px; padding: 5px; " id="discussion" onclick="vider('#h3Messages', 'Fil de discussion', '#nbMessages')">
         <input type="hidden" id="nbMessages" value="0" />
         <h3 id="h3Messages">Fil de discussion</h3>
     </div>
-    <div style="width: 45%; float: left; border: solid 1px #dad7d7; margin-right: 20px; padding: 5px; " id="mentions" onclick="vider('#h3Mentions', 'Mentions', '#nbMentions')">
+    <div style="width: 22%; float: left; border: solid 1px #dad7d7; margin-right: 20px; padding: 5px; " id="mentions" onclick="vider('#h3Mentions', 'Mentions', '#nbMentions')">
         <input type="hidden" id="nbMentions" value="0" />
         <h3 id="h3Mentions">Mentions</h3>
+    </div>
+    <div style="width: 22%; float: left; border: solid 1px #dad7d7; margin-right: 20px; padding: 5px; " id="messagesprives" onclick="vider('#h3MessagesPrives', 'Messages privés', '#nbMessagesPrives')">
+        <input type="hidden" id="nbMessagesPrives" value="0" />
+        <h3 id="h3MessagesPrives">Messages privés</h3>
+    </div>
+    <div style="width: 22%; float: left; border: solid 1px #dad7d7; margin-right: 20px; padding: 5px; " id="system" onclick="vider('#h3System', 'Notifications système', '#nbNotificationsSysteme')">
+        <input type="hidden" id="nbSystem" value="0" />
+        <h3 id="h3System">Notifications</h3>
     </div>
 </div>
 @section scripts {
@@ -33,46 +41,60 @@
             chat.client.sendToClients = function (name, message, messageId, to) {
                 
                 // Add the message to the page.
-                var nbMessages = parseInt($('#nbMessages').val())
-                var nbMentions = parseInt($('#nbMentions').val())
+                var nbMessages = parseInt($('#nbMessages').val());
+                var nbMentions = parseInt($('#nbMentions').val());
 
-                var borderColor
-                var displayNameWithAt = "@@" + $('#displayname').val()
+                var borderColor;
+                var displayNameWithAt = "@@" + $('#displayname').val();
 
                 if ($.inArray(displayNameWithAt, to) > -1) {
-                    borderColor = '#FF0000'
+                    borderColor = '#FF0000';
 
-                    nbMentions = nbMentions + 1
-                    $('#nbMentions').val(nbMentions)
-                    $('#h3Mentions').text('Mentions (' + nbMentions + ')')
-
-                    $('#h3Mentions').after('<div style="border: solid 1px #dad7d7; margin-top:5px; padding:5px"><strong>' + htmlEncode(messageId) + ' - ' + htmlEncode(name)
-                    + '</strong>> ' + htmlEncode(message)
-                    + ' | <a onclick="repondre(' + messageId + ')">Répondre</a><input type="hidden" id=from' + messageId + ' value="' + name + '" /></div>');
+                    nbMentions++;
+                    $('#nbMentions').val(nbMentions);
+                    $('#h3Mentions').text('Mentions (' + nbMentions + ')');
+                    $('#h3Mentions').after(getTextToAppend(name, message, messageId, borderColor));
                 }
                 else {
-                    borderColor = '#dad7d7'
+                    borderColor = '#dad7d7';
                 }
 
-                $('#h3Messages').after('<div style="border: solid 1px ' + borderColor + '; margin-top:5px; padding:5px"><strong>' + htmlEncode(messageId) + ' - ' + htmlEncode(name)
-                    + '</strong>> ' + htmlEncode(message)
-                    + ' | <a onclick="repondre(' + messageId + ')">Répondre</a><input type="hidden" id=from' + messageId + ' value="' + name + '" /></div>');
+                $('#h3Messages').after(getTextToAppend(name, message, messageId, borderColor));
 
-                nbMessages = nbMessages + 1
-                $('#nbMessages').val(nbMessages)
-                $('#h3Messages').text('Fil de discussion (' + nbMessages + ')')
+                nbMessages++;
+                $('#nbMessages').val(nbMessages);
+                $('#h3Messages').text('Fil de discussion (' + nbMessages + ')');
             }
 
+            chat.client.sendDm = function(from, message, messageId) {
+                var nbMessagesPrives = parseInt($('#nbMessagesPrives').val());
+                var borderColor = '#dad7d7';
+                nbMessagesPrives++;
+                $('#nbMessagesPrives').val(nbMessagesPrives);
+                $('#h3MessagesPrives').text('Messages privés (' + nbMessagesPrives + ')');
+                $('#h3MessagesPrives').after(getDmToAppend(from, message, messageId, borderColor));
+            }
+
+            chat.client.systemNotification = function (message, color) {
+                var nbMessagesPrives = parseInt($('#nbMessagesPrives').val());
+                nbMessagesPrives++;
+                $('#nbSystem').val(nbMessagesPrives);
+                $('#h3System').text('Notifications (' + nbMessagesPrives + ')');
+                $('#h3System').after(getSystemTextToAppend(message, color));
+            }
             
             // Get the user name and store it to prepend to messages.
             $('#displayname').val(prompt('Enter your name:', ''));
             // Set initial focus to message input box.
             $('#message').focus();
 
-            $('#h2Title').after('<h3>Bienvenue ' + $('#displayname').val() + ' !</h3>')
+            $('#h2Title').after('<h3>Bienvenue ' + $('#displayname').val() + ' !</h3>');
 
             // Start the connection.
             $.connection.hub.start().done(function () {
+
+                chat.server.notifyConnection($('#displayname').val());
+
                 $('#sendmessage').click(function () {
                     // Call the Send method on the hub.
                     chat.server.sendToHub($('#displayname').val(), $('#message').val());
@@ -91,14 +113,43 @@
         }
 
         function vider(h3, texte, hidden) {
-            $(hidden).val(0)
-            $(h3).text(texte)
+            $(hidden).val(0);
+            $(h3).text(texte);
         }
 
         function repondre(idMessage) {
-            var from = $('#from' + idMessage).val()
-            $('#message').val('@@' + from + ' ')
+            var from = $('#from' + idMessage).val();
+            $('#message').val('@@' + from + ' ');
             $('#message').focus();
         }
+
+        function dm(idMessage) {
+            var from = $('#from' + idMessage).val();
+            $('#message').val('d ' + from + ' ');
+            $('#message').focus();
+        }
+
+        function getTextToAppend(name, message, messageId, borderColor) {
+            //alert("Message from :" + $.connection.hub.id);
+            return '<div style="border: solid 1px '+ borderColor + '; margin-top:5px; padding:5px"><strong>' + htmlEncode(messageId) + ' - ' + htmlEncode(name)
+                        + '</strong>> ' + htmlEncode(message)
+                        + ' | <a onclick="repondre(' + messageId + ')">Répondre</a><input type="hidden" id=from' + messageId + ' value="' + name + '" />'
+                        + ' | <a onclick="dm(' + messageId + ')">Message privé</a>'
+                        + '</div>';
+        }
+
+        function getDmToAppend(name, message, messageId, borderColor) {
+            //alert("Message from :" + $.connection.hub.id);
+            return '<div style="border: solid 1px ' + borderColor + '; margin-top:5px; padding:5px"><strong>' + htmlEncode(messageId) + ' - ' + htmlEncode(name)
+                        + '</strong>> ' + htmlEncode(message)
+                        + ' | <a onclick="dm(' + messageId + ')">Message privé</a>'
+                        + '</div>';
+        }
+
+        function getSystemTextToAppend(message, borderColor) {
+            //alert("Message from :" + $.connection.hub.id);
+            return '<div style="border: solid 1px ' + borderColor + '; margin-top:5px; padding:5px">' + htmlEncode(message) + '</div>';
+        }
+
     </script>
 }
