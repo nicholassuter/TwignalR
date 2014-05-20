@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 
 namespace TwitterWithSignalR.Models
 {
@@ -30,7 +27,22 @@ namespace TwitterWithSignalR.Models
             }
         }
 
-        public string GetConnection(T key)
+        public T Remove(string connectionId)
+        {
+            var key = GetConnectionFromValue(connectionId);
+
+            if (!EqualityComparer<T>.Default.Equals(key, default(T)))
+            {
+                lock (_connections)
+                {
+                    _connections.Remove(key);
+                }
+            }
+
+            return key;
+        }
+
+        public string GetConnectionFromKey(T key)
         {
             if (_connections.ContainsKey(key))
             {
@@ -40,16 +52,15 @@ namespace TwitterWithSignalR.Models
             return null;
         }
 
-        public void Remove(string connectionId)
+        public T GetConnectionFromValue(string value)
         {
-            lock (_connections)
+            if (_connections.ContainsValue(value))
             {
-                if (_connections.ContainsValue(connectionId))
-                {
-                    T key = _connections.FirstOrDefault(x => x.Value == connectionId).Key;
-                    _connections.Remove(key);
-                }
+                return _connections.FirstOrDefault(x => x.Value == value).Key;
             }
+            return default(T);
         }
+
+        
     }
 }

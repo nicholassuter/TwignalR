@@ -130,7 +130,6 @@
         }
 
         function getTextToAppend(name, message, messageId, borderColor) {
-            //alert("Message from :" + $.connection.hub.id);
             return '<div style="border: solid 1px '+ borderColor + '; margin-top:5px; padding:5px"><strong>' + htmlEncode(messageId) + ' - ' + htmlEncode(name)
                         + '</strong>> ' + htmlEncode(message)
                         + ' | <a onclick="repondre(' + messageId + ')">Répondre</a><input type="hidden" id=from' + messageId + ' value="' + name + '" />'
@@ -139,7 +138,6 @@
         }
 
         function getDmToAppend(name, message, messageId, borderColor) {
-            //alert("Message from :" + $.connection.hub.id);
             return '<div style="border: solid 1px ' + borderColor + '; margin-top:5px; padding:5px"><strong>' + htmlEncode(messageId) + ' - ' + htmlEncode(name)
                         + '</strong>> ' + htmlEncode(message)
                         + ' | <a onclick="dm(' + messageId + ')">Message privé</a>'
@@ -147,7 +145,6 @@
         }
 
         function getSystemTextToAppend(message, borderColor) {
-            //alert("Message from :" + $.connection.hub.id);
             return '<div style="border: solid 1px ' + borderColor + '; margin-top:5px; padding:5px">' + htmlEncode(message) + '</div>';
         }
 

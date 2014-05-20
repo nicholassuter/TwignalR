@@ -37,7 +37,7 @@ namespace SignalRChat
             if (words.Count() > 2)
             {
                 string sendTo = words[1];
-                string connectionId = Connections.GetConnection(sendTo);
+                string connectionId = Connections.GetConnectionFromKey(sendTo);
                 if (!string.IsNullOrEmpty(connectionId))
                 {
                     string messageToSend = string.Join(" ", words.Skip(2));
@@ -60,32 +60,11 @@ namespace SignalRChat
             Clients.All.systemNotification(userName + " vient de se connecter.", "#81F781");
         }
 
-        //public override Task OnConnected()
-        //{
-        //    string from = Context.User.Identity.Name;
-
-        //    _connections.Add(from, Context.ConnectionId);
-
-        //    return base.OnConnected();
-        //}
-
         public override Task OnDisconnected()
         {
             Connections.Remove(Context.ConnectionId);
 
             return base.OnDisconnected();
-        }
-
-        public override Task OnReconnected()
-        {
-            string name = Context.User.Identity.Name;
-
-            if (!Connections.GetConnection(name).Contains(Context.ConnectionId))
-            {
-                Connections.Add(name, Context.ConnectionId);
-            }
-
-            return base.OnReconnected();
         }
     }
 }
